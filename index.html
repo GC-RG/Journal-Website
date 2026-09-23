@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --paper:#F1EEE3;
+  --surface:#FFFFFF;
+  --ink:#2A2823;
+  --muted:#8D8677;
+  --line:#DAD4C2;
+  --accent:#5B7A5E;
+  --accent-soft:#E4EADD;
+  --warm:#B0763F;
+  --warm-soft:#F3E3CE;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:720px;
+  margin:0 auto;
+  padding:32px 20px 80px;
+}
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:16px;
+  padding-bottom:20px;
+  border-bottom:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.date-block .day{
+  font-family:'Fraunces',serif;
+  font-size:28px;
+  font-weight:500;
+  line-height:1.15;
+}
+.date-block .time{
+  color:var(--muted);
+  font-size:14px;
+  margin-top:4px;
+}
+.loc-block{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.loc-block input{
+  border:none;
+  border-bottom:1px solid var(--line);
+  background:transparent;
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  color:var(--ink);
+  padding:4px 2px;
+  min-width:140px;
+  outline:none;
+}
+.loc-block input:focus{border-bottom-color:var(--accent);}
+.loc-block input::placeholder{color:var(--muted);}
+.loc-pin{color:var(--muted); font-size:14px;}
+
+.toolbar-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:22px 0 10px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.pill-group{display:flex; gap:8px; flex-wrap:wrap;}
+.pill{
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink);
+  border-radius:999px;
+  padding:6px 14px;
+  font-size:13px;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.pill:hover{border-color:var(--accent);}
+.pill.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+.pill.streak{background:var(--warm-soft); border-color:var(--warm-soft); color:#7A5124;}
+.meta-right{
+  font-size:13px;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.save-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--accent);
+  display:inline-block;
+  opacity:0;
+  transition:opacity .3s;
+}
+.save-dot.show{opacity:1;}
+
+.entry-box{
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+textarea{
+  width:100%;
+  min-height:260px;
+  border:none;
+  outline:none;
+  resize:vertical;
+  padding:20px 20px 56px;
+  font-family:'Inter',sans-serif;
+  font-size:16px;
+  line-height:1.7;
+  color:var(--ink);
+  background:transparent;
+}
+textarea::placeholder{color:var(--muted);}
+.entry-tools{
+  position:absolute;
+  bottom:10px;
+  right:12px;
+  display:flex;
+  gap:8px;
+}
+.tool-btn{
+  width:36px; height:36px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:var(--paper);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  font-size:16px;
+  color:var(--ink);
+  transition:background .15s, transform .1s;
+}
+.tool-btn:hover{background:var(--accent-soft);}
+.tool-btn:active{transform:scale(0.94);}
+.tool-btn.recording{background:#D9534F; color:#fff; border-color:#D9534F;}
+.tool-btn.busy{opacity:.6; cursor:wait;}
+.tool-btn[disabled]{opacity:.35; cursor:not-allowed;}
+
+.attach-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:14px;
+  flex-wrap:wrap;
+}
+.attach-btn{
+  border:1px dashed var(--line);
+  background:transparent;
+  color:var(--muted);
+  border-radius:8px;
+  padding:8px 14px;
+  font-size:13px;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.attach-btn:hover{border-color:var(--accent); color:var(--accent);}
+.thumbs{display:flex; gap:8px; flex-wrap:wrap;}
+.thumb{
+  position:relative;
+  width:56px; height:56px;
+  border-radius:6px;
+  overflow:hidden;
+  border:1px solid var(--line);
+}
+.thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+.thumb .rm{
+  position:absolute; top:2px; right:2px;
+  width:16px; height:16px;
+  background:rgba(0,0,0,.55);
+  color:#fff; border:none; border-radius:50%;
+  font-size:10px; line-height:16px; text-align:center;
+  cursor:pointer; padding:0;
+}
+
+.section-title{
+  font-family:'Fraunces',serif;
+  font-size:15px;
+  color:var(--muted);
+  margin:36px 0 12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.cal-nav{display:flex; gap:10px; align-items:center;}
+.cal-nav button{
+  border:none; background:transparent; color:var(--muted);
+  cursor:pointer; font-size:15px; padding:2px 6px;
+}
+.cal-nav button:hover{color:var(--ink);}
+.cal-label{font-size:13px; color:var(--ink); min-width:110px; text-align:center;}
+
+table.cal{width:100%; border-collapse:collapse;}
+table.cal th{
+  font-size:11px; color:var(--muted); font-weight:500;
+  padding-bottom:6px;
+}
+table.cal td{
+  text-align:center;
+  padding:2px;
+}
+.day-cell{
+  width:100%;
+  aspect-ratio:1;
+  max-width:38px; max-height:38px;
+  margin:0 auto;
+  border-radius:8px;
+  border:1px solid transparent;
+  background:transparent;
+  color:var(--ink);
+  font-size:13px;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  position:relative;
+  font-family:'Inter',sans-serif;
+}
+.day-cell:hover{border-color:var(--line);}
+.day-cell.has-entry::after{
+  content:'';
+  position:absolute; bottom:4px; left:50%; transform:translateX(-50%);
+  width:4px; height:4px; border-radius:50%;
+  background:var(--accent);
+}
+.day-cell.today{font-weight:600; color:var(--accent);}
+.day-cell.selected{background:var(--accent); color:#fff;}
+.day-cell.selected.has-entry::after{background:#fff;}
+.day-cell.empty{cursor:default;}
+
+.hint{font-size:12px; color:var(--muted); margin-top:6px;}
+
+.heatmap{
+  display:grid;
+  grid-auto-flow:column;
+  grid-template-rows:repeat(7, 12px);
+  gap:3px;
+}
+.heat-cell{
+  width:12px; height:12px;
+  border-radius:2px;
+  background:var(--line);
+}
+.heat-cell.filled{background:var(--accent);}
+.heat-cell.today-cell{outline:1px solid var(--warm);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="date-block">
+      <div class="day" id="dayLabel">—</div>
+      <div class="time" id="timeLabel">—</div>
+    </div>
+    <div class="loc-block">
+      <span class="loc-pin">&#128205;</span>
+      <input id="locationInput" type="text" placeholder="Where are you?">
+    </div>
+  </header>
+
+  <div class="toolbar-row">
+    <div class="pill-group">
+      <button class="pill active" id="todayBtn">Today</button>
+      <span class="pill streak" id="streakPill">🔥 0 day streak</span>
+      <span class="pill" id="bestStreakPill" style="color:var(--muted);">Best: 0</span>
+    </div>
+    <div class="meta-right">
+      <span id="wordCount">0 words</span>
+      <span><span class="save-dot" id="saveDot"></span> <span id="saveLabel"></span></span>
+    </div>
+  </div>
+
+  <div class="entry-box">
+    <textarea id="entryText" placeholder="Write about your day..."></textarea>
+    <div class="entry-tools">
+      <button class="tool-btn" id="micBtn" title="Voice to text">&#127908;</button>
+      <button class="tool-btn" id="ocrBtn" title="Image to text (printed text works best — not handwriting)">&#128196;</button>
+    </div>
+  </div>
+  <div class="hint" id="viewingHint" style="display:none;"></div>
+
+  <div class="attach-row">
+    <button class="attach-btn" id="attachBtn">+ Attach photos</button>
+    <div class="thumbs" id="thumbs"></div>
+  </div>
+  <div class="attach-row">
+    <button class="attach-btn" id="exportBtn">&#11015; Export all entries (.zip)</button>
+  </div>
+  <input type="file" id="attachInput" accept="image/*" multiple style="display:none;">
+  <input type="file" id="ocrInput" accept="image/*" style="display:none;">
+
+  <div class="section-title">
+    <span>Activity</span>
+  </div>
+  <div id="heatmapWrap" style="overflow-x:auto; padding-bottom:6px;"></div>
+
+  <div class="section-title">
+    <span>Past entries</span>
+    <div class="cal-nav">
+      <button id="prevMonth">&#8249;</button>
+      <span class="cal-label" id="calLabel"></span>
+      <button id="nextMonth">&#8250;</button>
+    </div>
+  </div>
+  <table class="cal">
+    <thead>
+      <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+    </thead>
+    <tbody id="calBody"></tbody>
+  </table>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+  // Plain browser storage — works on any host, no login needed.
+  // Swap this object out later if you add real user accounts.
+  const storage = {
+    async get(key){
+      const v = localStorage.getItem(key);
+      return v===null ? null : {key, value:v};
+    },
+    async set(key, value){
+      localStorage.setItem(key, value);
+      return {key, value};
+    },
+    async delete(key){
+      localStorage.removeItem(key);
+      return {key, deleted:true};
+    },
+    async list(prefix){
+      const keys = Object.keys(localStorage).filter(k=>k.startsWith(prefix));
+      return {keys};
+    }
+  };
+
+  const dayLabel = document.getElementById('dayLabel');
+  const timeLabel = document.getElementById('timeLabel');
+  const locationInput = document.getElementById('locationInput');
+  const entryText = document.getElementById('entryText');
+  const wordCountEl = document.getElementById('wordCount');
+  const saveDot = document.getElementById('saveDot');
+  const saveLabel = document.getElementById('saveLabel');
+  const streakPill = document.getElementById('streakPill');
+  const bestStreakPill = document.getElementById('bestStreakPill');
+  const heatmapWrap = document.getElementById('heatmapWrap');
+  const todayBtn = document.getElementById('todayBtn');
+  const viewingHint = document.getElementById('viewingHint');
+  const thumbsEl = document.getElementById('thumbs');
+  const attachBtn = document.getElementById('attachBtn');
+  const attachInput = document.getElementById('attachInput');
+  const micBtn = document.getElementById('micBtn');
+  const ocrBtn = document.getElementById('ocrBtn');
+  const ocrInput = document.getElementById('ocrInput');
+  const calBody = document.getElementById('calBody');
+  const calLabel = document.getElementById('calLabel');
+  const prevMonth = document.getElementById('prevMonth');
+  const nextMonth = document.getElementById('nextMonth');
+  const exportBtn = document.getElementById('exportBtn');
+
+  const todayKey = keyFor(new Date());
+  let selectedKey = todayKey;
+  let calMonth = new Date();
+  let currentImages = [];
+  let saveTimer = null;
+  let entryKeys = new Set();
+
+  function keyFor(d){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function labelFor(key){
+    const d = new Date(key+'T00:00:00');
+    return d.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+  }
+
+  function tickClock(){
+    const now = new Date();
+    if(selectedKey === todayKey){
+      dayLabel.textContent = labelFor(todayKey);
+    }
+    timeLabel.textContent = now.getFullYear()+' — '+now.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+  }
+  setInterval(tickClock, 1000*30);
+
+  function updateWordCount(){
+    const words = entryText.value.trim().split(/\s+/).filter(Boolean);
+    wordCountEl.textContent = words.length + (words.length===1?' word':' words');
+  }
+
+  function flashSaved(){
+    saveDot.classList.add('show');
+    saveLabel.textContent = 'Saved';
+    setTimeout(()=>saveDot.classList.remove('show'), 1200);
+  }
+
+  async function loadAllKeys(){
+    try{
+      const res = await storage.list('entry:', false);
+      entryKeys = new Set((res && res.keys) || []);
+    }catch(e){ entryKeys = new Set(); }
+  }
+
+  async function computeStreak(){
+    let streak = 0;
+    let cursor = new Date();
+    // if today has no entry yet, streak counts back from yesterday
+    if(!entryKeys.has('entry:'+todayKey)) cursor.setDate(cursor.getDate()-1);
+    while(entryKeys.has('entry:'+keyFor(cursor))){
+      streak++;
+      cursor.setDate(cursor.getDate()-1);
+    }
+    streakPill.textContent = '🔥 ' + streak + (streak===1?' day streak':' day streak');
+
+    // longest streak ever, from all recorded dates
+    const dates = Array.from(entryKeys).map(k=>k.replace('entry:','')).sort();
+    let longest = 0, run = 0, prevDate = null;
+    for(const d of dates){
+      const cur = new Date(d+'T00:00:00');
+      if(prevDate){
+        const diffDays = Math.round((cur-prevDate)/86400000);
+        run = diffDays===1 ? run+1 : 1;
+      } else {
+        run = 1;
+      }
+      longest = Math.max(longest, run);
+      prevDate = cur;
+    }
+    longest = Math.max(longest, streak);
+    bestStreakPill.textContent = 'Best: ' + longest;
+    renderHeatmap();
+  }
+
+  function renderHeatmap(){
+    heatmapWrap.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'heatmap';
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 364);
+    // align start back to the previous Sunday so weeks form clean columns
+    start.setDate(start.getDate() - start.getDay());
+
+    let cursor = new Date(start);
+    while(cursor <= today){
+      const k = keyFor(cursor);
+      const cell = document.createElement('div');
+      cell.className = 'heat-cell';
+      if(entryKeys.has('entry:'+k)) cell.classList.add('filled');
+      if(k===todayKey) cell.classList.add('today-cell');
+      if(cursor >= start){
+        cell.title = k + (entryKeys.has('entry:'+k) ? ' — journaled' : '');
+      } else {
+        cell.style.visibility = 'hidden';
+      }
+      grid.appendChild(cell);
+      cursor.setDate(cursor.getDate()+1);
+    }
+    heatmapWrap.appendChild(grid);
+  }
+
+  async function flushPendingSave(){
+    if(saveTimer){
+      clearTimeout(saveTimer);
+      saveTimer = null;
+      await doSave();
+    }
+  }
+
+  async function loadEntry(key){
+    await flushPendingSave();
+    selectedKey = key;
+    todayBtn.classList.toggle('active', key===todayKey);
+    viewingHint.style.display = key===todayKey ? 'none' : 'block';
+    if(key!==todayKey){
+      viewingHint.textContent = 'Viewing ' + labelFor(key) + ' — edits save to this day.';
+    }
+    dayLabel.textContent = labelFor(key);
+    if(key===todayKey) tickClock();
+
+    let data = null;
+    try{
+      const res = await storage.get('entry:'+key, false);
+      data = res ? JSON.parse(res.value) : null;
+    }catch(e){ data = null; }
+
+    entryText.value = data ? (data.text||'') : '';
+    locationInput.value = data ? (data.location||'') : '';
+    currentImages = data ? (data.images||[]) : [];
+    renderThumbs();
+    updateWordCount();
+    saveLabel.textContent = '';
+    renderCalendar();
+  }
+
+  function renderThumbs(){
+    thumbsEl.innerHTML = '';
+    currentImages.forEach((src, i)=>{
+      const div = document.createElement('div');
+      div.className = 'thumb';
+      div.innerHTML = '<img src="'+src+'"><button class="rm" data-i="'+i+'">×</button>';
+      thumbsEl.appendChild(div);
+    });
+    thumbsEl.querySelectorAll('.rm').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        currentImages.splice(Number(btn.dataset.i),1);
+        renderThumbs();
+        scheduleSave();
+      });
+    });
+  }
+
+  function scheduleSave(){
+    saveLabel.textContent = 'Saving…';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(doSave, 500);
+  }
+
+  async function doSave(){
+    const text = entryText.value;
+    const location = locationInput.value;
+    const isEmpty = !text.trim() && !location.trim() && currentImages.length===0;
+    const k = 'entry:'+selectedKey;
+    try{
+      if(isEmpty){
+        try{ await storage.delete(k, false); }catch(e){}
+        entryKeys.delete(k);
+      } else {
+        const payload = {text, location, images: currentImages, updatedAt: Date.now()};
+        await storage.set(k, JSON.stringify(payload), false);
+        entryKeys.add(k);
+      }
+      flashSaved();
+      await computeStreak();
+      renderCalendar();
+    }catch(e){
+      saveLabel.textContent = 'Could not save';
+    }
+  }
+
+  entryText.addEventListener('input', ()=>{ updateWordCount(); scheduleSave(); });
+  locationInput.addEventListener('input', scheduleSave);
+
+  todayBtn.addEventListener('click', ()=>loadEntry(todayKey));
+
+  // Attach photos (kept as attachments)
+  attachBtn.addEventListener('click', ()=>attachInput.click());
+  attachInput.addEventListener('change', async (e)=>{
+    const files = Array.from(e.target.files||[]);
+    for(const f of files){
+      const dataUrl = await resizeImage(f, 800, 0.72);
+      currentImages.push(dataUrl);
+    }
+    renderThumbs();
+    scheduleSave();
+    attachInput.value = '';
+  });
+
+  function resizeImage(file, maxW, quality){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        const img = new Image();
+        img.onload = ()=>{
+          const scale = Math.min(1, maxW/img.width);
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width*scale;
+          canvas.height = img.height*scale;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Voice to text
+  let recognizing = false;
+  let recognition = null;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    micBtn.disabled = true;
+    micBtn.title = 'Voice input not supported in this browser';
+  } else {
+    recognition = new SR();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.onresult = (e)=>{
+      let chunk = '';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal) chunk += e.results[i][0].transcript;
+      }
+      if(chunk){
+        insertAtCursor(chunk.trim()+' ');
+      }
+    };
+    recognition.onerror = (e)=>{
+      stopRecording();
+      if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+        alert('Microphone access was blocked. Allow microphone permission for this site in your browser settings and try again.');
+      } else if(e.error === 'no-speech'){
+        // silent — user just didn't speak, no need to alarm them
+      } else {
+        console.warn('Speech recognition error:', e.error);
+      }
+    };
+    recognition.onend = ()=>{ if(recognizing){ recognition.start(); } };
+  }
+  micBtn.addEventListener('click', ()=>{
+    if(!SR) return;
+    if(recognizing) stopRecording(); else startRecording();
+  });
+  function startRecording(){
+    recognizing = true;
+    micBtn.classList.add('recording');
+    try{ recognition.start(); }catch(e){}
+  }
+  function stopRecording(){
+    recognizing = false;
+    micBtn.classList.remove('recording');
+    try{ recognition.stop(); }catch(e){}
+  }
+
+  function insertAtCursor(str){
+    const start = entryText.selectionStart;
+    const end = entryText.selectionEnd;
+    const val = entryText.value;
+    entryText.value = val.slice(0,start) + str + val.slice(end);
+    const pos = start + str.length;
+    entryText.selectionStart = entryText.selectionEnd = pos;
+    updateWordCount();
+    scheduleSave();
+  }
+
+  // Image to text (OCR)
+  ocrBtn.addEventListener('click', ()=>ocrInput.click());
+  ocrInput.addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    ocrBtn.classList.add('busy');
+    ocrBtn.textContent = '…';
+    try{
+      const { data } = await Tesseract.recognize(file, 'eng');
+      const text = (data && data.text || '').trim();
+      if(text) insertAtCursor(text + ' ');
+    }catch(err){
+      console.error(err);
+    } finally {
+      ocrBtn.classList.remove('busy');
+      ocrBtn.innerHTML = '&#128196;';
+      ocrInput.value = '';
+    }
+  });
+
+  // Calendar
+  function renderCalendar(){
+    calBody.innerHTML = '';
+    const year = calMonth.getFullYear();
+    const month = calMonth.getMonth();
+    calLabel.textContent = calMonth.toLocaleDateString(undefined,{month:'long', year:'numeric'});
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+
+    let row = document.createElement('tr');
+    for(let i=0;i<firstDay;i++){
+      const td = document.createElement('td');
+      td.innerHTML = '<div class="day-cell empty"></div>';
+      row.appendChild(td);
+    }
+    for(let d=1; d<=daysInMonth; d++){
+      if(row.children.length===7){ calBody.appendChild(row); row = document.createElement('tr'); }
+      const dateObj = new Date(year, month, d);
+      const k = keyFor(dateObj);
+      const td = document.createElement('td');
+      const cell = document.createElement('div');
+      cell.className = 'day-cell';
+      cell.textContent = d;
+      if(k===todayKey) cell.classList.add('today');
+      if(entryKeys.has('entry:'+k)) cell.classList.add('has-entry');
+      if(k===selectedKey) cell.classList.add('selected');
+      cell.addEventListener('click', ()=>loadEntry(k));
+      td.appendChild(cell);
+      row.appendChild(td);
+    }
+    while(row.children.length<7 && row.children.length>0){
+      const td = document.createElement('td');
+      td.innerHTML = '<div class="day-cell empty"></div>';
+      row.appendChild(td);
+    }
+    calBody.appendChild(row);
+  }
+  prevMonth.addEventListener('click', ()=>{ calMonth.setMonth(calMonth.getMonth()-1); renderCalendar(); });
+  nextMonth.addEventListener('click', ()=>{ calMonth.setMonth(calMonth.getMonth()+1); renderCalendar(); });
+
+  // Export everything to a downloadable zip (one folder per day)
+  exportBtn.addEventListener('click', async ()=>{
+    await flushPendingSave();
+    exportBtn.disabled = true;
+    const originalLabel = exportBtn.textContent;
+    exportBtn.textContent = 'Preparing…';
+    try{
+      const res = await storage.list('entry:');
+      const keys = (res && res.keys) || [];
+      if(keys.length===0){
+        alert('No entries to export yet.');
+        return;
+      }
+      const zip = new JSZip();
+      for(const k of keys){
+        const dateKey = k.replace('entry:','');
+        const r = await storage.get(k);
+        if(!r) continue;
+        let data;
+        try{ data = JSON.parse(r.value); }catch(e){ continue; }
+        const folder = zip.folder(dateKey);
+        let textContent = 'Date: '+dateKey+'\n';
+        if(data.location) textContent += 'Location: '+data.location+'\n';
+        textContent += '\n'+(data.text||'');
+        folder.file('entry.txt', textContent);
+        (data.images||[]).forEach((src, i)=>{
+          const base64 = (src.split(',')[1]) || '';
+          if(base64) folder.file('photo-'+(i+1)+'.jpg', base64, {base64:true});
+        });
+      }
+      const blob = await zip.generateAsync({type:'blob'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'journal-export-'+keyFor(new Date())+'.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }catch(e){
+      console.error(e);
+      alert('Export failed — please try again.');
+    } finally {
+      exportBtn.disabled = false;
+      exportBtn.textContent = originalLabel;
+    }
+  });
+
+  // Safety net: force-save immediately if the tab is hidden or closed
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'hidden') flushPendingSave();
+  });
+  window.addEventListener('pagehide', ()=>{ flushPendingSave(); });
+
+  // Init
+  (async function init(){
+    tickClock();
+    await loadAllKeys();
+    await computeStreak();
+    await loadEntry(todayKey);
+  })();
+})();
+</script>
+</body>
+</html>
